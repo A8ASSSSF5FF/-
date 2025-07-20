@@ -1,0 +1,390 @@
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class GameManager : MonoBehaviour
+{
+    public static GameManager Instance;
+    public int totalPlayers = 50;
+    public bool gameStarted = false;
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+        DontDestroyOnLoad(gameObject);
+    }
+
+    private void Start()
+    {
+        StartGame();
+    }
+
+    public void StartGame()
+    {
+        gameStarted = true;
+        Debug.Log("اللعبة بدأت - باتل رويال السعودية!");
+    }
+
+    public void EndGame()
+    {
+        gameStarted = false;
+        Debug.Log("اللعبة انتهت");
+        // هنا تقدر تضيف شاشة النتيجة
+    }
+
+    public void LoadMap(string mapName)
+    {
+        SceneManager.LoadScene(mapName);
+    }
+}using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    public float rotationSpeed = 700f;
+    public Camera playerCamera;
+
+    private void Update()
+    {
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
+        Vector3 move = new Vector3(h, 0, v).normalized;
+
+        transform.Translate(move * moveSpeed * Time.deltaTime, Space.World);
+
+        if (move != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(move);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
+    }
+}using UnityEngine;
+
+public class Weapon : MonoBehaviour
+{
+    public GameObject bulletPrefab;
+    public Transform firePoint;
+    public float fireRate = 0.2f;
+    private float nextFireTime = 0f;
+
+    private void Update()
+    {
+        if (Input.GetButton("Fire1") && Time.time >= nextFireTime)
+        {
+            nextFireTime = Time.time + fireRate;
+            Shoot();
+        }
+    }
+
+    void Shoot()
+    {
+        Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        Debug.Log("طلقة نزلت!");
+    }
+}using UnityEngine;
+
+public class PlayerHealth : MonoBehaviour
+{
+    public int maxHealth = 100;
+    public int currentHealth;
+    public bool isDown = false;
+
+    private void Start()
+    {
+        currentHealth = maxHealth;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        currentHealth -= damage;
+        if (currentHealth <= 0 && !isDown)
+        {
+            isDown = true;
+            Debug.Log("اللاعب صار نازل يحتاج إنعاش");
+            // أوقف تحكم اللاعب مؤقتاً
+        }
+    }
+
+    public void Revive()
+    {
+        if (isDown)
+        {
+            currentHealth = maxHealth;
+            isDown = false;
+            Debug.Log("تم إحياء اللاعب");
+            // استأنف تحكم اللاعب
+        }
+    }
+}using System.Collections.Generic;
+using UnityEngine;
+
+public class TeamManager : MonoBehaviour
+{
+    public int teamID;
+    public List<GameObject> teammates;
+
+    public bool IsTeammate(GameObject player)
+    {
+        return teammates.Contains(player);
+    }
+}using UnityEngine;
+
+public class DropZoneSelector : MonoBehaviour
+{
+    public GameObject mapUI;
+    public float selectionTime = 10f;
+    private bool isLeader = false;
+
+    private void Start()
+    {
+        if (isLeader)
+        {
+            mapUI.SetActive(true);
+            Invoke("AutoDrop", selectionTime);
+        }
+    }
+
+    public void SelectDropZone(Vector3 position)
+    {
+        CancelInvoke();
+        StartDrop(position);
+    }
+
+    void AutoDrop()
+    {
+        Vector3 defaultPos = new Vector3(0, 100, 0); // مكان افتراضي
+        StartDrop(defaultPos);
+    }
+
+    void StartDrop(Vector3 position)
+    {
+        mapUI.SetActive(false);
+        transform.position = position;
+        Debug.Log("نزل اللاعب عند: " + position);
+    }
+}using UnityEngine;
+
+public class CurrencySystem : MonoBehaviour
+{
+    public int riyals = 0;
+
+    public void AddRiyals(int amount)
+    {
+        riyals += amount;
+        Debug.Log("تم إضافة " + amount + " ريال. المجموع: " + riyals);
+    }
+
+    public bool SpendRiyals(int amount)
+    {
+        if (riyals >= amount)
+        {
+            riyals -= amount;
+            Debug.Log("تم إنفاق " + amount + " ريال. المتبقي: " + riyals);
+            return true;
+        }
+        Debug.Log("رصيد غير كافي!");
+        return false;
+    }
+}using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class MapSelector : MonoBehaviour
+{
+    public void LoadNorthMap()
+    {
+        SceneManager.LoadScene("NorthMap");
+    }
+
+    public void LoadSouthMap()
+    {
+        SceneManager.LoadScene("SouthMap");
+    }
+}using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class GameManager : MonoBehaviour
+{
+    public static GameManager Instance;
+    public int totalPlayers = 50;
+    public bool gameStarted = false;
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+        DontDestroyOnLoad(gameObject);
+    }
+
+    private void Start()
+    {
+        StartGame();
+    }
+
+    public void StartGame()
+    {
+        gameStarted = true;
+        Debug.Log("اللعبة بدأت - باتل رويال السعودية!");
+    }
+
+    public void EndGame()
+    {
+        gameStarted = false;
+        Debug.Log("اللعبة انتهت");
+        // هنا تقدر تضيف شاشة النتيجة
+    }
+
+    public void LoadMap(string mapName)
+    {
+        SceneManager.LoadScene(mapName);
+    }
+}using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    public float rotationSpeed = 700f;
+    public Camera playerCamera;
+
+    private void Update()
+    {
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
+        Vector3 move = new Vector3(h, 0, v).normalized;
+
+        transform.Translate(move * moveSpeed * Time.deltaTime, Space.World);
+
+        if (move != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(move);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
+    }
+}using UnityEngine;
+
+public class Weapon : MonoBehaviour
+{
+    public GameObject bulletPrefab;
+    public Transform firePoint;
+    public float fireRate = 0.2f;
+    private float nextFireTime = 0f;
+
+    private void Update()
+    {
+        if (Input.GetButton("Fire1") && Time.time >= nextFireTime)
+        {
+            nextFireTime = Time.time + fireRate;
+            Shoot();
+        }
+    }
+
+    void Shoot()
+    {
+        Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        Debug.Log("طلقة نزلت!");
+    }
+}using UnityEngine;
+
+public class PlayerHealth : MonoBehaviour
+{
+    public int maxHealth = 100;
+    public int currentHealth;
+    public bool isDown = false;
+
+    private void Start()
+    {
+        currentHealth = maxHealth;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        currentHealth -= damage;
+        if (currentHealth <= 0 && !isDown)
+        {
+            isDown = true;
+            Debug.Log("اللاعب صار نازل يحتاج إنعاش");
+            // أوقف تحكم اللاعب مؤقتاً
+        }
+    }
+
+    public void Revive()
+    {
+        if (isDown)
+        {
+            currentHealth = maxHealth;
+            isDown = false;
+            Debug.Log("تم إحياء اللاعب");
+            // استأنف تحكم اللاعب
+        }
+    }
+}using System.Collections.Generic;
+using UnityEngine;
+
+public class TeamManager : MonoBehaviour
+{
+    public int teamID;
+    public List<GameObject> teammates;
+
+    public bool IsTeammate(GameObject player)
+    {
+        return teammates.Contains(player);
+    }
+}using UnityEngine;
+
+public class DropZoneSelector : MonoBehaviour
+{
+    public GameObject mapUI;
+    public float selectionTime = 10f;
+    private bool isLeader = false;
+
+    private void Start()
+    {
+        if (isLeader)
+        {
+            mapUI.SetActive(true);
+            Invoke("AutoDrop", selectionTime);
+        }
+    }
+
+    public void SelectDropZone(Vector3 position)
+    {
+        CancelInvoke();
+        StartDrop(position);
+    }
+
+    void AutoDrop()
+    {
+        Vector3 defaultPos = new Vector3(0, 100, 0); // مكان افتراضي
+        StartDrop(defaultPos);
+    }
+
+    void StartDrop(Vector3 position)
+    {
+        mapUI.SetActive(false);
+        transform.position = position;
+        Debug.Log("نزل اللاعب عند: " + position);
+    }
+}using UnityEngine;
+
+public class CurrencySystem : MonoBehaviour
+{
+    public int riyals = 0;
+
+    public void AddRiyals(int amount)
+    {
+        riyals += amount;
+        Debug.Log("تم إضافة " + amount + " ريال. المجموع: " + riyals);
+    }
+
+    public bool SpendRiyals(int amount)
+    {
+        if (riyals >= amount)
+        {
+            riyals -= amount;
+            Debug.Log("تم إنفاق " + amount + " ريال. المتبقي: " + riyals);
+            return true;
+        }
+        Debug.Log("رصيد غير كافي!");
+        return false;
+    }README.mdMap_SaudiArabia.unity	الخريطة
+assets/audio/voice_arabic/	أصوات سعوديةGameManager.csMainMenu.cs
+}
