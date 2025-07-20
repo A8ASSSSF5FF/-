@@ -1,0 +1,327 @@
+public class DropZoneSelector : MonoBehaviour
+{
+    public GameObject mapUI;
+    public float selectionTime = 10f;
+    private bool isLeader = false;
+
+    void Start()
+    {
+        if (isLeader)
+        {
+            mapUI.SetActive(true);
+            Invoke("AutoDropZone", selectionTime);
+        }
+    }
+
+    public void SetDropZone(Vector3 location)
+    {
+        CancelInvoke();
+        StartDrop(location);
+    }
+
+    void AutoDropZone()
+    {
+        Vector3 defaultLocation = new Vector3(100, 0, 100); // موقع افتراضي
+        StartDrop(defaultLocation);
+    }
+
+    void StartDrop(Vector3 dropLocation)
+    {
+        mapUI.SetActive(false);
+        transform.position = dropLocation;
+        Debug.Log("تم النزول في: " + dropLocation);
+    }
+}
+- GameManager
+- PlayerManager
+- MapManager
+- SpawnSystem
+- UICanvas
+  - TeamSelectionUI
+  - MapSelectionUI
+  - InGameHUDpublic class ReviveSystem : MonoBehaviour
+{
+    public float reviveTime = 5f;
+    private bool isReviving = false;
+
+    public void StartRevive(GameObject downedPlayer)
+    {
+        if (!isReviving)
+        {
+            StartCoroutine(Revive(downedPlayer));
+        }
+    }
+
+    IEnumerator Revive(GameObject player)
+    {
+        isReviving = true;
+        yield return new WaitForSeconds(reviveTime);
+        player.GetComponent<PlayerHealth>().RestoreHealth();
+        isReviving = false;
+    }
+}public class TeamManager : MonoBehaviour
+{
+    public int teamID;
+    public List<GameObject> teammates;
+
+    public bool IsTeammate(GameObject player)
+    {
+        return teammates.Contains(player);
+    }
+}public class CurrencySystem : MonoBehaviour
+{
+    public int riyals = 0;
+
+    public void AddMoney(int amount)
+    {
+        riyals += amount;
+    }
+
+    public bool SpendMoney(int amount)
+    {
+        if (riyals >= amount)
+        {
+            riyals -= amount;
+            return true;
+        }
+        return false;
+    }
+}using UnityEngine;
+
+public class GameManager : MonoBehaviour
+{
+    public static GameManager Instance;
+    public int totalPlayers = 50;
+    public bool gameStarted = false;
+
+    void Awake()
+    {
+        if (Instance == null) Instance = this;
+    }
+
+    void Start()
+    {
+        StartGame();
+    }
+
+    void StartGame()
+    {
+        gameStarted = true;
+        Debug.Log("اللعبة بدأت - باتل رويال السعودية!");
+    }
+}using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    public float rotationSpeed = 700f;
+    public Camera playerCamera;
+
+    void Update()
+    {
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
+        Vector3 move = new Vector3(h, 0, v).normalized;
+
+        transform.Translate(move * moveSpeed * Time.deltaTime, Space.World);
+
+        if (move != Vector3.zero)
+        {
+            Quaternion toRotation = Quaternion.LookRotation(move, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
+        }
+    }
+}using UnityEngine;
+
+public class Gun : MonoBehaviour
+{
+    public GameObject bulletPrefab;
+    public Transform firePoint;
+    public float fireRate = 0.2f;
+    private float nextFire = 0f;
+
+    void Update()
+    {
+        if (Input.GetButton("Fire1") && Time.time > nextFire)
+        {
+            nextFire = Time.time + fireRate;
+            Shoot();
+        }
+    }
+
+    void Shoot()
+    {
+        Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        Debug.Log("طلقنا 🔫");
+    }
+}using UnityEngine;
+
+public class PlayerHealth : MonoBehaviour
+{
+    public int maxHealth = 100;
+    public int currentHealth;
+    public bool isDown = false;
+
+    void Start()
+    {
+        currentHealth = maxHealth;
+    }
+
+    public void TakeDamage(int dmg)
+    {
+        currentHealth -= dmg;
+        if (currentHealth <= 0)
+        {
+            isDown = true;
+            Debug.Log("اللاعب نزل - يحتاج إنعاش");
+        }
+    }
+
+    public void RestoreHealth()
+    {
+        currentHealth = maxHealth;
+        isDown = false;
+        Debug.Log("تم الإنعاش!");
+    }
+}using UnityEngine;
+
+public class DropSelector : MonoBehaviour
+{
+    public GameObject mapUI;
+    private bool isLeader = true;
+
+    void Start()
+    {
+        if (isLeader)
+        {
+            mapUI.SetActive(true);
+            Invoke("AutoDrop", 10f);
+        }
+    }
+
+    public void ChooseDrop(Vector3 pos)
+    {
+        CancelInvoke();
+        DropPlayer(pos);
+    }
+
+    void AutoDrop()
+    {
+        DropPlayer(new Vector3(50, 100, 50));
+    }
+
+    void DropPlayer(Vector3 pos)
+    {
+        mapUI.SetActive(false);
+        transform.position = pos;
+        Debug.Log("نزل اللاعب عند: " + pos);
+    }
+}using UnityEngine;
+
+public class Wallet : MonoBehaviour
+{
+    public int riyals = 0;
+
+    public void AddRiyals(int amount)
+    {
+        riyals += amount;
+        Debug.Log("أضفت " + amount + " ريال، المجموع: " + riyals);
+    }
+
+    public bool SpendRiyals(int amount)
+    {
+        if (riyals >= amount)
+        {
+            riyals -= amount;
+            return true;
+        }
+        Debug.Log("ما عندك ريال كفاية!");
+        return false;
+    }
+}using System.Collections.Generic;
+using UnityEngine;
+
+public class TeamManager : MonoBehaviour
+{
+    public int teamID;
+    public List<GameObject> teammates;
+
+    public bool IsMyTeammate(GameObject player)
+    {
+        return teammates.Contains(player);
+    }
+}public class MapSelector : MonoBehaviour
+{
+    public void LoadNorthMap()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("NorthMap");
+    }
+
+    public void LoadSouthMap()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("SouthMap");
+    }
+}using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class MapSelector : MonoBehaviour
+{
+    public void LoadNorthMap()
+    {
+        SceneManager.LoadScene("NorthMap");
+    }
+
+    public void LoadSouthMap()
+    {
+        SceneManager.LoadScene("SouthMap");
+    }
+}public AudioSource clickSound;
+
+public void PlayClick()
+{
+    clickSound.Play();
+}using Fusion;
+using Fusion.Sockets;
+using UnityEngine;
+
+public class NetworkManagerFusion : MonoBehaviour, INetworkRunnerCallbacks
+{
+    public NetworkRunner runnerPrefab;
+
+    async void Start()
+    {
+        var runner = Instantiate(runnerPrefab);
+        await runner.StartGame(new StartGameArgs()
+        {
+            GameMode = GameMode.AutoHostOrClient,
+            SessionName = "SaudiBattleRoyaleRoom",
+            Scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex,
+            SceneManager = runner.GetComponent<NetworkSceneManagerDefault>()
+        });
+    }
+
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
+    {
+        Debug.Log("لاعب جديد دخل 🔥");
+    }
+
+    // باقي الأحداث تقدر تفعّلها لاحقاً مثل OnPlayerLeft وغيرها
+}using UnityEngine;
+
+public class WaterWave : MonoBehaviour
+{
+    public float waveSpeed = 1f;   // سرعة الموج
+    public float waveHeight = 0.2f; // ارتفاع الموج
+    private Vector3 startPos;
+
+    void Start()
+    {
+        startPos = transform.position;
+    }
+
+    void Update()
+    {
+        float newY = startPos.y + Mathf.Sin(Time.time * waveSpeed) * waveHeight;
+        transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+    }
+}
